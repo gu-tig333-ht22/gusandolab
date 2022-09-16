@@ -1,6 +1,4 @@
 // ignore_for_file: unnecessary_new, prefer_typing_uninitialized_variables, library_private_types_in_public_api
-// ^ Får mindre OCD över notiser och väljer att ignorera
-// behöver addera exception handling för att hantera en tom input
 
 import 'package:flutter/material.dart';
 
@@ -14,10 +12,9 @@ class Todoapp extends StatelessWidget {
     return MaterialApp(
       title: 'Att-göra lista',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.yellow,
-        unselectedWidgetColor: Colors.yellow,
-      ),
+          brightness: Brightness.dark,
+          primarySwatch: Colors.yellow,
+          unselectedWidgetColor: Colors.yellow),
       home: const TodoList(),
       debugShowCheckedModeBanner: false,
     );
@@ -39,26 +36,19 @@ class TodoItem extends StatelessWidget {
   final Todo todo;
   final onTodoChanged;
 
-  TextStyle? _getTextStyle(bool checked) {
-    if (!checked) return null;
-    return const TextStyle(
-      color: Colors.grey,
-      decoration: TextDecoration
-          .lineThrough, // Ändra till bold för att förtydliga att raden blivit vald (vid byte mot checkbox)
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return CheckboxListTile(
-        controlAffinity: ListTileControlAffinity.leading,
-        secondary: const Icon(Icons.close),
-        title: Text(todo.name, style: _getTextStyle(todo.checked)),
-        value: false,
-        onChanged: (bool? newValue) {
-          //setState(() {
-          // = newValue;   Behöver ta vidare onchanged till att ändra värde
-        });
+      title: Text(todo.name),
+      controlAffinity: ListTileControlAffinity.leading,
+      secondary: const Icon(Icons.close),
+      activeColor: Colors.yellow,
+      checkColor: Colors.black,
+      value: todo.checked,
+      onChanged: (bool? value) {
+        onTodoChanged(todo);
+      },
+    );
   }
 }
 
@@ -77,7 +67,7 @@ class _TodoListState extends State<TodoList> {
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: const Text('Att-Göra lista'),
+        title: const Text('Att-Göra Lista'),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -98,6 +88,8 @@ class _TodoListState extends State<TodoList> {
     );
   }
 
+  //final void Function()? delete;
+
   void _handleTodoChange(Todo todo) {
     setState(() {
       todo.checked = !todo.checked;
@@ -114,7 +106,7 @@ class _TodoListState extends State<TodoList> {
   Future<void> _displayDialog() async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // användare behöver trycka på knappen
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Ny uppgift'),
