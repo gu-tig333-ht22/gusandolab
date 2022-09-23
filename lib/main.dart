@@ -1,16 +1,18 @@
-// ignore_for_file: unnecessary_new, prefer_typing_uninitialized_variables, library_private_types_in_public_api, prefer_final_fields, unused_field, curly_braces_in_flow_control_structures
+// ignore_for_file: unnecessary_new, prefer_typing_uninitialized_variables, library_private_types_in_public_api, prefer_final_fields, unused_field, curly_braces_in_flow_control_structures, unused_import, unnecessary_null_comparison
 
+import 'dart:async';
 import 'package:flutter/material.dart';
+//import 'package:http/http.dart' as http;
 
-void main() => runApp(const Todoapp());
+void main() => runApp(const MyApp());
 
-class Todoapp extends StatelessWidget {
-  const Todoapp({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Att-göra lista',
+      title: 'Att-Göra ista',
       theme: ThemeData(
           brightness: Brightness.dark,
           primarySwatch: Colors.yellow,
@@ -22,34 +24,11 @@ class Todoapp extends StatelessWidget {
 }
 
 class Todo {
-  Todo({required this.name, required this.checked});
+  Todo({required this.id, required this.name, required this.checked});
+
+  int id;
   String name;
   bool checked;
-}
-
-class TodoItem extends StatelessWidget {
-  TodoItem({
-    required this.todo,
-    required this.onTodoChanged,
-  }) : super(key: ObjectKey(todo));
-
-  final Todo todo;
-  final onTodoChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return CheckboxListTile(
-      title: Text(todo.name),
-      controlAffinity: ListTileControlAffinity.leading,
-      secondary: const Icon(Icons.close),
-      activeColor: Colors.yellow,
-      checkColor: Colors.black,
-      value: todo.checked,
-      onChanged: (bool? value) {
-        onTodoChanged(todo);
-      },
-    );
-  }
 }
 
 class TodoList extends StatefulWidget {
@@ -61,72 +40,112 @@ class TodoList extends StatefulWidget {
 
 class _TodoListState extends State<TodoList> {
   final TextEditingController _textFieldController = TextEditingController();
-  final List<Todo> _todos = [];
+  List<Todo> _todos = [];
+  List<Todo> _filterd = [];
+
   String initialText = "";
+  bool isChecked = false;
+  int listState = 0;
+
+  StreamController<bool> nameStreamController = StreamController.broadcast();
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: const Text('Att-Göra Lista'),
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Att-Göra'),
+        actions: [
+          PopupMenuButton(itemBuilder: (context) {
+            return [
+              const PopupMenuItem<int>(
+                value: 0,
+                child: Text("Samtliga"),
+              ),
+              const PopupMenuItem<int>(
+                value: 1,
+                child: Text("Avklarade"),
+              ),
+              const PopupMenuItem<int>(
+                value: 2,
+                child: Text("Ej avklarade"),
+              ),
+            ];
+          }, onSelected: (value) {
+            if (value == 0) {
+              _todos.clear();
+              _todos.addAll(_filterd);
+              if (mounted) {
+                setState(() {});
+              }
+            } else if (value == 1) {
+              _todos.clear();
+              for (var todo in _filterd) {
+                if (todo.checked) {
+                  _todos.add(todo);
+                }
+              }
+              if (mounted) {
+                setState(() {});
+              }
+            } else if (value == 2) {
+              _todos.clear();
+              for (var todo in _filterd) {
+                if (!todo.checked) {
+                  _todos.add(todo);
+                }
+              }
+              if (mounted) {
+                setState(() {});
+              }
+            }
+          }),
+        ],
       ),
       body: ListView.builder(
           itemCount: _todos.length,
           itemBuilder: (context, index) {
             return ListTile(
-              title: Text(_todos[index].name),
+              leading: Checkbox(
+                checkColor: Colors.black,
+                activeColor: Colors.yellow,
+                value: _todos[index].checked,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _todos[index].checked = value!;
+                    Todo? filteredTodo = (_filterd
+                        .singleWhere((it) => it.id == _todos[index].id));
+                    if (filteredTodo != null) {
+                      filteredTodo.checked = value;
+                    }
+                  });
+                },
+              ),
+              title: Text(
+                _todos[index].name,
+                style: TextStyle(
+                    decoration: _todos[index].checked
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none),
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Uppdatera uppgift'),
-                            content: TextField(
-                              onChanged: (value) {
-                                setState(() {
-                                  initialText = value;
-                                });
-                              },
-                              controller: _textFieldController,
-                              decoration: const InputDecoration(
-                                  hintText: 'Skriv här..'),
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('Uppdatera'),
-                                onPressed: () {
-                                  setState(() {
-                                    _todos[index].name = initialText;
-                                  });
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text("Uppdaterat"),
-                                  ));
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
                       setState(() {
+                        Todo? filteredTodo = (_filterd
+                            .singleWhere((it) => it.id == _todos[index].id));
+                        if (filteredTodo != null) {
+                          _filterd.remove(filteredTodo);
+                        }
                         _todos.removeAt(index);
                       });
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Anteckning borttagen"),
+                        content: Text(
+                          'Anteckning borttagen',
+                          textAlign: TextAlign.center,
+                        ),
                       ));
                     },
                     icon: const Icon(
@@ -138,15 +157,6 @@ class _TodoListState extends State<TodoList> {
               ),
             );
           }),
-      // ListView(
-      //   padding: const EdgeInsets.symmetric(vertical: 8.0),
-      //   children: _todos.map((Todo todo) {
-      //     return TodoItem(
-      //       todo: todo,
-      //       onTodoChanged: _handleTodoChange,
-      //     );
-      //   }).toList(),
-      // ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _displayDialog(),
         tooltip: 'Ny uppgift',
@@ -157,19 +167,12 @@ class _TodoListState extends State<TodoList> {
     );
   }
 
-  //final void Function()? delete;
-
-/*  void _handleTodoChange(Todo todo) {
-    setState(() {
-      todo.checked = !todo.checked;
-    });
-    _displayDialog();
-  }
-  */
-
   void _addTodoItem(String name) {
     setState(() {
-      _todos.add(Todo(name: name, checked: false));
+      int id = _filterd.length + 1;
+      _filterd.add(Todo(id: id, name: name, checked: false));
+      _todos.clear();
+      _todos.addAll(_filterd);
     });
     _textFieldController.clear();
   }
@@ -177,7 +180,7 @@ class _TodoListState extends State<TodoList> {
   Future<void> _displayDialog() async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Ny uppgift'),
@@ -195,32 +198,12 @@ class _TodoListState extends State<TodoList> {
                 Navigator.of(context).pop();
                 _addTodoItem(_textFieldController.text);
                 _textFieldController.clear();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ignore: unused_element
-  Future<void> _displayDialog2() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Ny uppgift'),
-          content: TextField(
-            controller: _textFieldController,
-            decoration: const InputDecoration(hintText: 'Skriv här..'),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Uppdatera'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _textFieldController.clear();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text(
+                    'Anteckning sparad!',
+                    textAlign: TextAlign.center,
+                  ),
+                ));
               },
             ),
           ],
