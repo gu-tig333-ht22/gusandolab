@@ -1,8 +1,9 @@
-// ignore_for_file: unnecessary_new, prefer_typing_uninitialized_variables, library_private_types_in_public_api, prefer_final_fields, unused_field, curly_braces_in_flow_control_structures, unused_import, unnecessary_null_comparison
+// ignore_for_file: unnecessary_new, prefer_typing_uninitialized_variables, library_private_types_in_public_api, prefer_final_fields, unused_field, curly_braces_in_flow_control_structures
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
+import 'package:random_string/random_string.dart';
 
 void main() => runApp(const MyApp());
 
@@ -12,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Att-Göra ista',
+      title: 'Att-Göra Lista',
       theme: ThemeData(
           brightness: Brightness.dark,
           primarySwatch: Colors.yellow,
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
 class Todo {
   Todo({required this.id, required this.name, required this.checked});
 
-  int id;
+  String id;
   String name;
   bool checked;
 }
@@ -54,7 +55,7 @@ class _TodoListState extends State<TodoList> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Att-Göra'),
+        title: const Text('Att-Göra Lista'),
         actions: [
           PopupMenuButton(itemBuilder: (context) {
             return [
@@ -169,7 +170,9 @@ class _TodoListState extends State<TodoList> {
 
   void _addTodoItem(String name) {
     setState(() {
-      int id = _filterd.length + 1;
+      String id = randomAlphaNumeric(10);
+
+      // int id = _filterd.length + 1;
       _filterd.add(Todo(id: id, name: name, checked: false));
       _todos.clear();
       _todos.addAll(_filterd);
